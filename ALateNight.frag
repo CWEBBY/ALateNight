@@ -1,4 +1,8 @@
-precision highp float;
+/**
+* Filename: ~/ALateNight.frag
+* Author: Chris Webb
+* Description: This file is the fragment shader that ray marches mugs as a showcase, textured with planar projection, reflection bounces and phong lighting. 
+**/
 
 #define MAX_STEPS 75
 #define MAX_DIST 75.
@@ -7,8 +11,10 @@ precision highp float;
 #define LIGHT_RADIUS 75.
 #define LIGHT_BOUNCES 1
 
+precision highp float;
 varying vec2 v_uv;
 
+// UNIFORMS
 uniform vec3 u_lightPositions[NUMBER_OF_LIGHTS];
 uniform vec3 u_lightColors[NUMBER_OF_LIGHTS];
 
@@ -25,6 +31,7 @@ uniform sampler2D u_surfaceAlbedoTex;
 uniform sampler2D u_surfaceNormalTex;
 uniform sampler2D u_surfaceGlossTex;
 
+// STRUCTS
 struct Material
 {
     vec4 albedo;
@@ -48,28 +55,32 @@ struct Ray
     Material hitMat;
 };
 
-vec2 NormalizeUV(vec2 OldUV) {return ((OldUV - .5) * u_resolution) / u_resolution.y;} //normalize to screen res.
-
-mat2 Rotate(float angle) { return mat2(cos(angle),-sin(angle),sin(angle),cos(angle)); }
-
-SDFObject SDFGroundPlane(vec3 pos) { return SDFObject(pos.y, 1); }
-
-float SDFTorus(vec3 p, vec2 t) { return length(vec2(length(p.xz)-t.x,p.y))-t.y; }
-
-float SmoothMin( float a, float b, float k ) { return min( a, b ) - (max( k-abs(a-b), 0.0 )/k)*(max( k-abs(a-b), 0.0 )/k)*(max( k-abs(a-b), 0.0 )/k)*k*(1.0/6.0); } //SDF courtesy of Inigo Quilez / https://iquilezles.org/www/articles/smin/smin.htm
-
-float Hash21(vec2 seed) { return fract(sin(seed.x * 1995. + seed.y * 74.) * 66547.); }
+// GENERAL FUNCTIONS
+vec2 NormalizeUV(vec2 OldUV) {return ((OldUV - .5) * u_resolution) / u_resolution.y;} // normalizes to screen res.
+mat2 Rotate(float angle) { return mat2(cos(angle),-sin(angle),sin(angle),cos(angle)); } // rotates the vector based on angle.
+float Hash21(vec2 seed) { return fract(sin(seed.x * 1995. + seed.y * 74.) * 66547.); } // takes a vec2 and creates a random float.
 
 vec2 Hash22(vec2 seed)
 {
+    // takes a vec2 and creates a random vec2.
     float noise = fract(sin(seed.x * 1995. + seed.y * 74.) * 66547.);
     return vec2(noise, Hash21(seed + noise));
 }
 
+float SmoothMin(float a, float b, float k) 
+{ 
+    //SDF courtesy of Inigo Quilez / https://iquilezles.org/www/articles/smin/smin.htm
+    float maxK = max(k - abs(a - b), 0.0);
+    return min(a, b) - (maxK / k) * (maxK / k) * (maxK / k) * k * (1.0 / 6.0); 
+} 
+
+// SDF FUNCTIONS
+float SDFTorus(vec3 p, vec2 t) { return length(vec2(length(p.xz)-t.x,p.y))-t.y; } // returns sdf value of a torus given a point.
+SDFObject SDFGroundPlane(vec3 pos) { return SDFObject(pos.y, 1); } // returns sdf value of a ground plane given a point, basically just uv.y.
+
 float SDFCylinder(vec3 p, vec3 a, vec3 b, float r)
 {
-    //SDF courtesy of BigWings.
-    //https://www.shadertoy.com/view/wdf3zl
+    //SDF courtesy of BigWings / https://www.shadertoy.com/view/wdf3zl
     vec3 ab = b-a;
     vec3 ap = p-a;
     float t = dot(ab, ap) / dot(ab, ab);
