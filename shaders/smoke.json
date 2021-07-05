@@ -1,0 +1,35 @@
+{
+  "meta": {
+    "name": "Smoke",
+    "description": "A generic shader for the portfolio site.",
+    "includes": [ "random" ]
+  },
+  "src": {
+    "vert": [
+      "uniform vec2 u_resolution;",
+      "attribute vec4 a_position;",
+      "varying vec2 v_uv;",
+      "",
+      "void main()",
+      "{",
+        "gl_Position = (a_position * 2.) - 1.;",
+        "v_uv = (a_position.xy * u_resolution) / a_position.xy * u_resolution.y;",
+      "}"
+    ],
+    "frag": [
+      "precision highp float;",
+      "uniform float u_time;",
+      "varying vec2 v_uv;",
+      "",
+      "void main()",
+      "{",
+        "vec2 speed = u_time * vec2(-.06125,.025);",
+        "float noise1 = SmoothRand21(v_uv + speed);",
+        "float noise2 = SmoothRand21(v_uv * vec2(1., 1.) + speed * vec2(-1.123486, 2.18413212));",
+        "float noise3 = SmoothRand21(v_uv * vec2(1., 1.) + speed * vec2(2.231156, -1.913483));",
+        "float col = 1. * (noise1 * (noise1 * noise3));",
+        "gl_FragColor = vec4(vec3(.75, 0., .15) *  clamp(col, 0., .2), 1.);",
+      "}"
+    ]
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "meta": {
+    "name": "Hexes",
+    "description": "A generic shader for the portfolio site.",
+    "includes": [ ]
+  },
+  "src": {
+    "vert": [
+      "uniform vec2 u_resolution;",
+      "attribute vec4 a_position;",
+      "varying vec2 v_uv;",
+      "",
+      "void main()",
+      "{",
+        "gl_Position = (a_position * 2.) - 1.;",
+        "v_uv = (a_position.xy * u_resolution) / a_position.xy * u_resolution.y;",
+      "}"
+    ],
+    "frag": [
+      "precision highp float;",
+      "",
+      "varying vec2 v_uv;",
+      "uniform vec2 u_resolution;",
+      "uniform float u_time;",
+      "",
+      "float Hex(vec2 pos) { return max(dot(abs(pos), normalize(vec2(1.73,1.))), abs(pos).y); }",
+      "",
+      "void main()",
+      "{",
+        "vec2 uv = v_uv;",
+        "vec2 speed = u_time * vec2(.0);",
+        "uv *= 5.;",
+        "vec2 hexAspect = vec2(1.732, 1.);",
+        "vec2 gridA = mod(uv, hexAspect) - (hexAspect* .5);",
+        "vec2 gridB = mod(uv - (hexAspect* .5), hexAspect) - (hexAspect* .5);",
+        "vec2 grid = abs(mix(gridA, gridB, step(length(gridB), length(gridA))));",
+        "float h = smoothstep(.4, .5,  Hex(grid));",
+        "uv /=  1. - ((sin(u_time) + 1.) * .5) * .1;",
+        "gridA = mod(uv, hexAspect) - (hexAspect* .5);",
+        "gridB = mod(uv - (hexAspect* .5), hexAspect) - (hexAspect* .5);",
+        "grid = abs(mix(gridA, gridB, step(length(gridB), length(gridA))));",
+        "h+= smoothstep(mix(.4, .45, (sin(u_time) + 1.) * .5), .5,  Hex(grid)) * 1. - ((sin(u_time) + 1.) * .25);",
+        "gl_FragColor = vec4(vec3(.75, 0., .15) *  clamp(h, 0., .2), 1.);",
+      "}"
+    ]
+  }
+}
